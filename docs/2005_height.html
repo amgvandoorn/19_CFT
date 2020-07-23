@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Anna Magdalena" />
+
+
+<title>Plant height may20</title>
+
+<script src="site_libs/header-attrs-2.1/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/master/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">19_CFT</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Plant height may20</h1>
+<h4 class="author">Anna Magdalena</h4>
+<h4 class="date">7/9/2020</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span> workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2020-07-23
+</p>
+<p>
+<strong>Checks:</strong> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6 <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> 1
+</p>
+<p>
+<strong>Knit directory:</strong> <code>19_CFT/</code> <span class="glyphicon glyphicon-question-sign" aria-hidden="true" title="This is the local directory in which the code in this file was executed."> </span>
+</p>
+<p>
+This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis was created with <a
+  href="https://github.com/jdblischak/workflowr">workflowr</a> (version 1.6.1). The <em>Checks</em> tab describes the reproducibility checks that were applied when the results were created. The <em>Past versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great! Since the R Markdown file has been committed to the Git repository, you know the exact version of the code that produced these results.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the global environment can affect the analysis in your R Markdown file in unknown ways. For reproduciblity it’s best to always run the code in an empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20200428code"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Seed:</strong> <code>set.seed(20200428)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20200428code" class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20200428)</code> was run prior to running the code in the R Markdown file. Setting a seed ensures that any results that rely on randomness, e.g. subsampling or permutations, are reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Session information:</strong> recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongdetected"> <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> <strong>Cache:</strong> detected </a>
+</p>
+</div>
+<div id="strongCachestrongdetected" class="panel-collapse collapse">
+<div class="panel-body">
+The following chunks had caches available:
+<ul>
+<li>
+read data
+</li>
+<li>
+session-info-chunk-inserted-by-workflowr
+</li>
+<li>
+setup
+</li>
+<li>
+spats
+</li>
+<li>
+unnamed-chunk-1
+</li>
+<li>
+unnamed-chunk-2
+</li>
+<li>
+unnamed-chunk-3
+</li>
+</ul>
+<p>To ensure reproducibility of the results, delete the cache directory <code>2005_height_cache</code> and re-run the analysis. To have workflowr automatically delete the cache directory prior to building the file, set <code>delete_cache = TRUE</code> when running <code>wflow_build()</code> or <code>wflow_publish()</code>.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongf3810d6"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> f3810d6 </a>
+</p>
+</div>
+<div id="strongRepositoryversionstrongf3810d6" class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version f3810d6. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .DS_Store
+    Ignored:    .RData
+    Ignored:    .Rhistory
+    Ignored:    .Rproj.user/
+    Ignored:    analysis/2005_height_cache/
+    Ignored:    data/.DS_Store
+
+Untracked files:
+    Untracked:  19_CFT.RData
+    Untracked:  analysis/plant_height.Rmd
+    Untracked:  data/19.CASS.CFT.IBA_combined.csv
+    Untracked:  data/200522_all_sh_height.csv
+    Untracked:  data/210720_psplines_data.Rdata
+    Untracked:  data/HTP_BiomassOverTime.csv
+    Untracked:  data/HTP_BiomassOverTime2.csv
+    Untracked:  data/Plant_height.csv
+    Untracked:  data/Plant_height.xlsx
+    Untracked:  data/harvest_data.csv
+    Untracked:  data/phenotype_DROPS_10Env.csv
+    Untracked:  data/phenotype_DROPS_10Env2.csv
+    Untracked:  data/yield_geno.csv
+    Untracked:  old.Rmd
+    Untracked:  output/200428_plantheight.png
+    Untracked:  output/210720_psplines
+    Untracked:  plant_height.html
+    Untracked:  results_freq20_biomass_NoError.csv
+    Untracked:  results_freq20_height.csv
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not included in this status report because it is ok for generated content to have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+
+<p>
+These are the previous versions of the repository in which changes were made to the R Markdown (<code>analysis/2005_height.Rmd</code>) and HTML (<code>docs/2005_height.html</code>) files. If you’ve configured a remote Git repository (see <code>?wflow_git_remote</code>), click on the hyperlinks in the table below to view the files as they were in that past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+f3810d6
+</td>
+<td>
+amgvandoorn
+</td>
+<td>
+2020-07-23
+</td>
+<td>
+wflow_publish(c(“analysis/index.Rmd”, “analysis/about.Rmd”, “analysis/license.Rmd”,
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>The analysis of the CFT 2019/2020 data is a multistep process. First we do a spatial correction with the SPaTS package for each screenhouse, at each time point for the plant height data.</p>
+<p>Then we use the Finlay Wilkinson model to calculate the environmental index (Eind) to correct fo differences between screenhouses.</p>
+<p>Subsequently we compare two models to fit the growth curves, a logistic growth model and a Psplines model. With the preferred model fit the growth curve for each even within each construct, the parameters derived from the fitted function can then be correlated to the final harvest data.</p>
+<pre class="r"><code>ph=read.csv(here(&quot;data/plant_height.csv&quot;)) </code></pre>
+<pre><code>  plot_number env  geno C  R week value
+1        1001 sh1 4_597 1 19    6    34
+2        1001 sh1 4_597 1 19    7    41
+3        1001 sh1 4_597 1 19    8    50
+4        1001 sh1 4_597 1 19    9    61
+5        1001 sh1 4_597 1 19   10    75
+6        1001 sh1 4_597 1 19   11   103</code></pre>
+</div>
+<div id="step-1.-spats-correction" class="section level1">
+<h1>Step 1. SpATS correction</h1>
+<p>For the spatial correction we run a separate model for each screenhouse and each measurement. Therefore we need to adjust the data so that it is grouped by these two factors, then run the model. For the model we use row and column numbers, the names of the events and the construct each event belongs to.</p>
+<pre class="r"><code># Group data by time and environment, attach the model, the residuals and predicted values.
+byts=ph %&gt;% group_by(week, env) %&gt;% nest() %&gt;% 
+  mutate(
+    spats_model=map(data, spats_model),
+    predict=map(spats_model, function(spats_model) { 
+      predict(spats_model, which=c(&quot;geno&quot;))}),
+    residuals=map(spats_model, residuals)
+  )</code></pre>
+<div class="figure" style="text-align: center">
+<img src="figure/2005_height.Rmd/spats-1.png" alt="Figure 1. Spatial model for plant height in screenhouse 1 at 6 weeks after planting." width="672" />
+<p class="caption">
+Figure 1. Spatial model for plant height in screenhouse 1 at 6 weeks after planting.
+</p>
+</div>
+<p>Now that we have all the spatial models, we create a new dataframe with the residuals and the predicted values attached inside the data, with these two we calculate the corrected values.</p>
+<pre class="r"><code>newbyts=byts %&gt;% mutate(
+    data=map(data,  ~mutate(.x,residuals=unlist(residuals))),
+    #remove clutter
+    predict=map(predict, function(predict){
+      dplyr::select(predict, geno, predicted.values, standard.errors)})
+    )
+#Join predict dataframe to data
+for(i in 1:39){
+  newbyts$data[[i]]=dplyr::left_join(newbyts$data[[i]], newbyts$predict[[i]], by=&#39;geno&#39;)
+}                         
+# Add column for corrected values to data
+newbyts %&lt;&gt;%
+  mutate(
+    data=map(data, ~mutate(.x,cor=residuals+predicted.values))
+  )</code></pre>
+<div class="figure" style="text-align: center">
+<img src="figure/2005_height.Rmd/unnamed-chunk-3-1.png" alt="Figure 2. Spatial model for plant height in screenhouse 1 at 6 weeks after planting, after spatial correction." width="672" />
+<p class="caption">
+Figure 2. Spatial model for plant height in screenhouse 1 at 6 weeks after planting, after spatial correction.
+</p>
+</div>
+<p>We see now that there is only a spatial trend of -0.04-0.06 left, as opposed to to original -5-10 in Figure 1.</p>
+</div>
+<div id="step-2.-gxe-finlay-wilkinson-model" class="section level1">
+<h1>Step 2. GxE Finlay Wilkinson model</h1>
+<p>The next is to see whether there are large differences between the screenhouses. We use the new, corrected values to fit a spatial model for each timepoint, with the screenhouses together, thus tripling the number of rows.</p>
+<pre class="r"><code># Group dataset by week, attach newly fitted spatial model
+newbyt=dplyr::select(newbyts, env,week,data) %&gt;%
+  unnest(data) %&gt;% group_by(week) %&gt;% nest() %&gt;%
+  mutate(
+    spats_model=map(data,spats_model2)
+  )</code></pre>
+<div class="figure" style="text-align: center">
+<img src="figure/2005_height.Rmd/plot%203sh-1.png" alt="Figure 3. Spatial model for all three screenhouses at 6 weeks after planting, after spatial correction." width="672" />
+<p class="caption">
+Figure 3. Spatial model for all three screenhouses at 6 weeks after planting, after spatial correction.
+</p>
+</div>
+<p>This is just to show how large the effect of each screenhouse is on the plant height, already in an early stage of the experiment. Since the screenhouses are better treated as three individual experiments, rather than a continuous gradient, we use a Finlay Wilkinson model to calculate the environmental index and fit a GxE model.</p>
+<p>To classify the differences between screenhouses, we add a column classifying the screenhouse. Screenhouse 1 is used for the second year in a row and is therefore classed as depleted, screenhouse 2 and 3 are classed as normal.</p>
+<pre class="r"><code>fwdat= newbyt %&gt;% mutate(
+    #remove superabundant wt replicates
+    data=map(data, function(data){ data[data$block_number&lt;5,]}),
+    #add screenhouse classification
+    data=map(data,  ~mutate(.x,ec=ifelse(sh==&#39;sh1&#39;,&quot;dep&quot;, &quot;norm&quot;))) )%&gt;%
+  dplyr::select(-spats_model) %&gt;% unnest(data) %&gt;%
+  group_by(week, geno, env,ec) %&gt;%
+  #get standard error and mean values per event per screenhouse per week
+  summarise( construct=unique(construct), event=unique(event), 
+             se=std.error(cor, na.rm=T),height=mean(cor, na.rm=T)) %&gt;% 
+  group_by(week) %&gt;% nest() %&lt;&gt;% mutate(
+  #fit Finlay Wilkinson model
+  fwfit=map(data, function(data){
+    fw(data=data.frame(data), y=&#39;height&#39;, Env=&#39;env&#39;, Geno=&#39;geno&#39;)}),
+  summary=map(fwfit, function(fwfit){fwfit$fits}),
+  adj.r2=as.double(map(summary, function(summary){summary$adj.r.squared})),
+  #extract fitted values
+  fitted=map(fwfit, fitted),
+  data=map(data,  ~mutate(.x,fitted=unlist(fitted))),
+  E.max=as.double(map(fwfit, function(fwfit){max(fwfit$Eindex)})),
+  E.min=as.double(map(fwfit, function(fwfit){min(fwfit$Eindex)}))
+  )</code></pre>
+<pre><code>   week    adj.r2
+1     6 0.2797330
+2     7 0.5294590
+3     8 0.4840273
+4     9 0.6105517
+5    10 0.7390020
+6    11 0.7197223
+7    12 0.7106286
+8    13 0.7752208
+9    14 0.7942427
+10   15 0.8436524
+11   19 0.8475994
+12   24 0.7738344
+13   28 0.7755524</code></pre>
+<p>We see that the GxE model fits improve after week 9. Early on there is still some random variation, whereas later on &gt;70% of the data is explained by the event and the environment.</p>
+</div>
+<div id="step-3.-time-series-model-selection-by-construct" class="section level1">
+<h1>Step 3. Time series model selection by construct</h1>
+<p>With the fitted values and the environmental index of the GxE model we calculate corrected genotypic values before fitting a growth model to the time series data. Then we compare the results of a logistc model and a p-spline model fitted to all events of each construct. Subsequently we fit our preferred model to each event individually.</p>
+<pre class="r"><code># reformat the dataset for time series
+fittime= fwdat %&gt;% dplyr::select(week,data, E.max, E.min) %&gt;%  unnest(data) %&gt;% group_by(week, geno) %&gt;% 
+  summarise(construct=unique(construct), event=unique(event), fit.min=min(fitted), fit.max=max(fitted), E.min=min(E.min), E.max=max(E.max), a=(fit.max-fit.min)/(E.max-E.min)) %&gt;% mutate(
+    height=fit.max-a*E.max
+  )
+
+#fit time, by construct
+ft.byc =fittime%&gt;% group_by(construct) %&gt;% nest() %&lt;&gt;%
+  mutate(
+    #Psplines model
+    obj=map(data, function(data){
+      PsplinesREML(x=data$week,y=data$height, xmin=6, xmax=28)}),
+    predw=map2(obj,data, function(obj,data){predict(obj, data$week)}),
+    data=map(data, ~mutate(.x, predw=unlist(predw))),
+    #Logistic model
+    obj.nls=map(data, function(data){
+         nls(height ~ SSlogis(week, phi1, phi2,phi3), data=data)}),
+    cf = map(obj.nls, coef),
+    alpha = as.double(map(cf, function(cf){as.numeric(cf[1])})),
+    beta = as.double(map(cf, function(cf){as.numeric(1/cf[3])})),
+    gamma = as.double(map(cf, function(cf){as.numeric(cf[2])})),
+    theta = pmap(list(alpha, beta,gamma), c),
+    predLw=map2(theta,data, function(theta,data){logistic(data$week,theta)}),
+    data=map(data, ~mutate(.x, predLw=unlist(predLw)))
+  )
+
+predat.cw= ft.byc %&gt;% dplyr::select(construct, data) %&gt;% unnest(data)
+
+#Extract Psplines model adjusted R2
+r2=with(predat.cw, summary(lm(height~predw)))$adj.r.squared
+
+#Extract logistic model adjusted R2
+r2L=with(predat.cw, summary(lm(height~predLw)))$adj.r.squared</code></pre>
+<div class="figure" style="text-align: center">
+<img src="figure/2005_height.Rmd/result%202%20models-1.png" alt="Figure 4. Psplines and logistic model fit for each construct." width="672" />
+<p class="caption">
+Figure 4. Psplines and logistic model fit for each construct.
+</p>
+</div>
+<div class="figure" style="text-align: center">
+<img src="figure/2005_height.Rmd/compare%20predictions-1.png" alt="Figure 5. Comparison of the correlation between the two model fits and the observed data." width="672" />
+<p class="caption">
+Figure 5. Comparison of the correlation between the two model fits and the observed data.
+</p>
+</div>
+<pre><code>     Model    Adj.R2
+1 Psplines 0.9952914
+2 Logistic 0.9825296</code></pre>
+<p>We obseverve an underestimation of the plant height prediction by the logistic model when the plants are approximately 300cm tall, at 15 weeks after planting. Also the correlation fit shows a slightly lower fit for the logistic model output than for the Psplines model output. Therefore we decide to continue fitting the Psplines model to the time series data of each event within the clones.</p>
+<p>The Psplines model produces three model parameters, the asymptote for maximum height, the maximum growth rate and the inflection point which is the time point during the experiment at which maximum growth occured. These three parameters can then be treated as traits together with final harvest traits.</p>
+</div>
+<div id="step-4.-time-series-per-event" class="section level1">
+<h1>Step 4. Time series per event</h1>
+<p>We recalculate the Psplines model per event, the single observation input per timepoint removes the wobble that is observed in figure 4.</p>
+<pre><code>  construct event  geno asymptote maximum.growth.rate inflection.point
+1         3   541 3_541    383.02               30.33            14.29
+2         3   589 3_589    420.62               31.98            14.31
+3         3   646 3_646    418.94               32.66            14.25
+4         3   691 3_691    408.82               30.14            14.32
+5         3   695 3_695    424.55               34.17            14.26
+6         3   696 3_696    414.97               32.92            14.42</code></pre>
+<div class="figure" style="text-align: center">
+<img src="figure/2005_height.Rmd/result%20psplines%20events-1.png" alt="Figure 6. Psplines model output per event. Asymptote, maximum growth rate and inflection point are given for the highest performing event within each construct." width="672" />
+<p class="caption">
+Figure 6. Psplines model output per event. Asymptote, maximum growth rate and inflection point are given for the highest performing event within each construct.
+</p>
+</div>
+</div>
+<div id="step-5.-correlation-of-traits" class="section level1">
+<h1>Step 5. Correlation of traits</h1>
+<p>We import the final harvest data, and select the traits that we can correlate to the time series traits. These are root size, root number, shoot weight, root weight and dry matter content. We do a spatial correction for each trait before we do a correlation with the growth model traits.</p>
+<pre class="r"><code>#import harvest data
+hv=read.csv(here(&#39;data/harvest_data.csv&#39;))
+
+#traits to correlate
+ttc=hv %&gt;% dplyr::select(env,construct, event, geno, env,plot_number, row_number,newrow, col_number, root_size, rtno, stwt,rtwt, dm)</code></pre>
+<p>We create a tibble attaching the spatial model, extract the residuals and the predicted values, and subsequently calculate corrected values. With these, we fit the Finlay Wilkinson model again to calculate the trait value for each event for the environmental index of 0.</p>
+<pre class="r"><code>#spatial correction
+traits=c(&#39;root_size&#39;, &#39;rtno&#39;, &#39;stwt&#39;,&#39;rtwt&#39;, &#39;dm&#39;)
+
+ttc.long=ttc %&lt;&gt;% pivot_longer(cols=traits,
+                      names_to = &quot;trait&quot;,
+                      values_to = &quot;value&quot;)  %&lt;&gt;% 
+  group_by(env, trait) %&gt;% nest() %&gt;% 
+  mutate( 
+    spats_model=map(data, spats_model),
+    predict=map(spats_model, function(spats_model) {
+      predict(spats_model, which=c(&quot;geno&quot;))}),
+    residuals=map(spats_model, residuals),
+    residuals=map(residuals, function(residuals){ifelse(is.na(residuals), 0, residuals)}),
+    data=map(data,  ~mutate(.x,residuals=unlist(residuals))),
+    #remove clutter
+    predict=map(predict, function(predict){
+      dplyr::select(predict, geno, predicted.values, standard.errors)})
+)
+
+#Join predict dataframe to data
+for(i in 1:15){
+  ttc.long$data[[i]]=dplyr::left_join(ttc.long$data[[i]], ttc.long$predict[[i]], by=&#39;geno&#39;)
+}                         
+# Add column for corrected values to data
+ttc.long %&lt;&gt;%
+  mutate(
+    data=map(data, ~mutate(.x,cor=residuals+predicted.values))) 
+
+# Finlay wilkinson correction
+check=ttc.long %&gt;% dplyr::select(-spats_model, -predict, -residuals) %&gt;% 
+  unnest(data) 
+fw.hv=ttc.long %&gt;% dplyr::select(-spats_model, -predict, -residuals) %&gt;% 
+  unnest(data) %&lt;&gt;% group_by(trait, env,  geno) %&gt;% 
+  summarise(construct=unique(construct), event=unique(event),sd=std.error(cor, na.rm=T), mean=mean(cor, na.rm=T)) %&gt;%
+  group_by(trait) %&gt;% nest() %&gt;% mutate(
+    fwfit=map(data, function(data){
+      fw(data=data.frame(data), y=&#39;mean&#39;, Env=&#39;env&#39;, Geno=&#39;geno&#39;)}),
+    summary=map(fwfit, function(fwfit){fwfit$fits}),
+    adj.r2=as.double(map(summary, function(summary){summary$adj.r.squared})),
+    #extract fitted values
+    fitted=map(fwfit, fitted),
+    data=map(data,  ~mutate(.x,fitted=unlist(fitted))),
+    E.max=as.double(map(fwfit, function(fwfit){max(fwfit$Eindex)})),
+    E.min=as.double(map(fwfit, function(fwfit){min(fwfit$Eindex)}))
+  ) %&gt;% dplyr::select(-fitted)
+
+hv.dat=fw.hv %&gt;% dplyr::select(trait, data, E.max, E.min) %&gt;% unnest(data) %&gt;% group_by(trait, geno) 
+  
+hv.short=hv.dat %&gt;% 
+  summarise(construct=unique(construct), event=unique(event), fit.min=min(fitted),fit.max=max(fitted), 
+            E.min=min(E.min), E.max=max(E.max), a=(fit.max-fit.min)/(E.max-E.min)) %&gt;% 
+  mutate(value=round(fit.max-a*E.max,3)) %&gt;% 
+  pivot_wider(id_cols=c(construct, event, geno), names_from=trait, values_from=value)
+
+all.dat=results %&gt;% dplyr::left_join(dplyr::select(hv.short, -construct, -event), by=&#39;geno&#39;)%&gt;% data.frame()</code></pre>
+<p>We have now attached the final harvest values for each event to the growth rate traits, and we can do the correlation.</p>
+<pre><code>   construct event     geno asymptote max.gr.rate infl.point     dm root_size
+1          3   541    3_541    383.02       30.33      14.29 30.538     3.158
+2          3   589    3_589    420.62       31.98      14.31 29.445     3.526
+3          3   646    3_646    418.94       32.66      14.25 31.137     3.794
+4          3   691    3_691    408.82       30.14      14.32 31.149     3.921
+5          3   695    3_695    424.55       34.17      14.26 31.451     4.259
+6          3   696    3_696    414.97       32.92      14.42 30.817     3.721
+7          3   698    3_698    417.20       31.10      14.28 30.182     4.259
+8          4  1020   4_1020    431.50       31.87      14.33 31.721     3.941
+9          4   553    4_553    412.69       29.88      14.31 29.942     3.694
+10         4   594    4_594    418.78       31.89      14.32 29.585     3.849
+11         4   597    4_597    414.59       30.04      14.44 30.473     3.812
+12         4   649    4_649    426.14       35.34      14.28 30.090     4.225
+13         4   653    4_653    426.86       32.28      14.28 31.677     4.426
+14         4   827    4_827    449.25       32.62      14.34 31.519     4.645
+15         7  1087   7_1087    416.58       33.05      14.17 28.985     3.740
+16         7  1148   7_1148    423.74       31.69      14.35 31.286     4.283
+17         7  1149   7_1149    415.29       26.19      14.23 30.595     3.995
+18         7  1152   7_1152    424.24       31.32      14.34 30.295     4.110
+19         7   567    7_567    401.52       29.88      14.28 30.349     3.817
+20         7   661    7_661    382.84       32.24      14.36 32.350     4.310
+21         7   667    7_667    425.95       29.94      14.31 30.015     3.481
+22        wt 60444 wt_60444    412.84       28.08      14.21 33.052     4.545
+    rtno  rtwt  stwt
+1  6.563 0.863 2.329
+2  7.303 1.097 2.851
+3  6.648 1.158 3.273
+4  7.690 1.211 2.649
+5  7.302 1.115 3.381
+6  6.795 1.213 2.780
+7  7.322 1.075 2.664
+8  7.580 1.444 3.613
+9  7.095 1.105 2.776
+10 7.269 1.089 3.199
+11 7.908 1.343 3.173
+12 7.589 1.228 2.891
+13 7.783 1.354 2.815
+14 8.314 1.562 4.147
+15 5.539 0.944 2.183
+16 7.481 1.199 2.838
+17 7.495 1.182 2.442
+18 8.377 1.307 3.540
+19 5.926 0.892 2.174
+20 7.015 1.151 2.769
+21 6.845 0.939 2.463
+22 8.277 1.512 2.788</code></pre>
+<p><img src="figure/2005_height.Rmd/correlation-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre><code>            asymptote max.gr.rate infl.point     dm root_size  rtno  rtwt stwt
+asymptote      1.0000       0.291     0.0054 -0.048     0.409  0.45 0.541 0.63
+max.gr.rate    0.2914       1.000     0.1186 -0.103     0.161 -0.12 0.021 0.37
+infl.point     0.0054       0.119     1.0000  0.072    -0.074  0.31 0.246 0.36
+dm            -0.0480      -0.103     0.0719  1.000     0.615  0.46 0.619 0.31
+root_size      0.4086       0.161    -0.0741  0.615     1.000  0.60 0.696 0.45
+rtno           0.4516      -0.121     0.3123  0.460     0.595  1.00 0.824 0.65
+rtwt           0.5414       0.021     0.2456  0.619     0.696  0.82 1.000 0.71
+stwt           0.6347       0.366     0.3619  0.312     0.454  0.65 0.712 1.00</code></pre>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span> Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+http://docs.mathjax.org/en/latest/configuration.html.  This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
