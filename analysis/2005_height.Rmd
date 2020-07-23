@@ -1,0 +1,611 @@
+---
+title: "Plant height may20"
+author: "Anna Magdalena"
+date: "7/9/2020"
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = "hide", warning=FALSE, message=FALSE)
+
+require(broom)
+require(corrplot)
+require(dplyr)
+require(fields)
+require(fitdistrplus)
+require(gapminder)
+require(ggplot2)
+require(ggplotify)
+require(gridExtra)
+require(grid)
+require(gtable)
+require(here)
+require(lwgeom)
+require(magrittr)
+require(modelr)
+require(plotrix)
+require(raster)
+require(rgeos)
+require(sf)
+require(stringr)
+require(SpATS)
+require(splines)
+require(tidyr)
+require(tidyverse)
+
+# Define models 
+PsplinesREML <- function(x,y,xmin,xmax, nknots=100,lambda=1.0,optimize=TRUE)
+{
+  eps = 0.001
+  xmin = xmin - eps
+  xmax = xmax + eps
+  pord = 2
+  degree = 3
+  nseg = nknots-3
+  dx = (xmax - xmin) / nseg
+  knots = seq(xmin - degree * dx, xmax + degree * dx, by = dx)
+  B = splineDesign(knots, x, derivs=rep(0,length(x)), ord = degree + 1)
+  BtB = crossprod(B)
+  # max ED for random part.. 
+  max_ED = length(unique(x)) - pord
+  BtY = t(B) %*% y
+  ncolB = ncol(B)
+  D = diff(diag(1,ncolB),diff=2)
+  DtD = crossprod(D)
+  phi = 1.0
+  psi = lambda*phi
+  
+  n = length(x)
+  p = 2
+  
+  for (it in 1:100)
+  {
+    C = phi*BtB + psi*DtD
+    
+    # calculate EDs 
+    Cinv = solve(C)
+    EDf_spline = p
+    EDr_spline = ncolB-p - psi*sum(diag(Cinv%*%DtD))
+    EDres = n - p - EDr_spline
+    #cat(sprintf("%4d %6.4f %5.4f \n", it, EDr_spline, EDres))
+    a = phi*Cinv%*%BtY
+    r = y - B %*% a
+    
+    if (optimize==FALSE) break
+    
+    Da = D %*% a
+    psi_new = EDr_spline / (sum(Da^2) + 1.0e-6)
+    phi_new = EDres / sum(r^2)
+    
+    pold = log(c(phi,psi))
+    pnew = log(c(phi_new,psi_new))
+    dif = max(abs(pold-pnew))
+    phi = phi_new
+    psi = psi_new
+    #cat("sum(r^2  ", sum(r^2),"\n")
+    #cat("suma     ", sum(a * (DtD %*% a)) ,"\n")
+    #cat("EDspline ",EDr_spline,"\n")
+    #cat("EDres ",EDres,"\n")
+    
+    #cat("phi, psi: \n", phi, "  ", psi, "  ", dif, "\n")
+    
+    if (dif < 1.0e-5) break
+  }
+  L = list(max_ED=max_ED, ED=EDr_spline+p,a=a,knots=knots,Nobs=n,x=x,y=y,xmin=xmin,xmax=xmax,
+           optimize=optimize)
+  class(L) = "PsplinesREML"
+  L
+}
+
+predict.PsplinesREML <- function(obj, x, deriv = FALSE)
+{
+  d= ifelse(deriv,1,0)
+  Bgrid = splineDesign(obj$knots, x, derivs=rep(d,length(x)), ord = 4)
+  pred = as.vector(Bgrid %*% obj$a)
+  pred
+}
+
+
+summary.PsplinesREML <- function(obj)
+{
+  if(obj$optimize)
+  {
+    cat("P-splines mixed model analysis \n\n")  
+  } else {
+    cat("P-splines analysis, with fixed penalty \n\n")
+  }
+  cat("Dimensions: \n")
+  col.names <- c("Effective", "Maximum", "Ratio", "Type")
+  row.names <- c("Intercept", "slope", "f(x)", NA, "Total", "Residual", "Nobs")	
+  m <- matrix(ncol = 4, nrow = 3 + 4, dimnames = list(row.names,col.names))
+  ed = c(1,1,obj$ED-2)
+  res = c(1.0,2.0,obj$Nobs)
+  m[,1] = c(sprintf("%.1f",ed),NA,sprintf("%.1f", obj$ED),
+            sprintf("%.1f", obj$Nobs - obj$ED), 
+            sprintf("%.0f", obj$Nobs))
+  m[,2] = c(sprintf("%.0f",c(1,1,obj$max_ED)),NA,sprintf("%0.f",obj$max_ED+2),NA,NA)
+  m[,3] = c(sprintf("%.2f",c(1,1,(obj$ED-2)/obj$max_ED)),NA,
+            sprintf("%.2f",obj$ED/(obj$max_ED+2)), NA,NA)
+  m[,4] = c('F','F','S',rep(NA,4))
+  print(m, quote = FALSE, right = TRUE, na.print = "", print.gap = 5)	
+}
+
+# logistic function
+logistic <- function(t, theta) {
+  theta[1]/(1+exp(-theta[2]*(t-theta[3])))
+}
+
+# derivative logistic function.
+logistic_deriv <- function(t, theta)
+{
+  theta[1]*theta[2]*exp(-theta[2]*(t-theta[3]))/(1+exp(-theta[2]*(t-theta[3])))^2
+}
+
+spats_model=function(ph){
+  SpATS(response="value", 
+        spatial = ~SpATS::PSANOVA(col_number, newrow, nseg=c(5,5)),
+        genotype = "geno", 
+        genotype.as.random = TRUE,
+        random=~R+C, 
+        data=ph, control=list(monitor=0),
+        geno.decomp = "construct")
+}
+spats_model2=function(data){
+  SpATS(response="cor", 
+        spatial = ~SpATS::PSANOVA(col_number, newrow, nseg=c(5,5)),
+        genotype = "geno", 
+        genotype.as.random = TRUE,
+        random=~R+C, 
+        data=data, control=list(monitor=0),
+        geno.decomp = "construct")
+}
+
+fw <- function(Geno, Env, y, data){
+  
+  # Sort data by Env and Geno
+  # data <- data[with(data, order(Env, Geno)), ]
+
+  # First calculate means per environment
+  means <- tapply(data[,y], data[,Env], mean, na.rm = TRUE)
+  
+  # Center the means to generate environmental index
+  cm <- means-mean(means)
+  nG <- nlevels(data[, Geno])
+  nE <- nlevels(data[, Env])
+  Eind <- rep(x=cm[sort(levels(data[,Env]))], each=nG)
+  
+  labC <- c("GenAdapt","Adapt","ER Stability")
+  labG <- levels(data[, Geno])
+  
+  param <- matrix(nrow=nG, ncol=3, dimnames = list(labG,labC))
+  
+  
+  # Fit a FW regression model
+  fw_fit <- lm(formula = data[, y] ~ data[, Geno] + data[, Env] + data[, Geno]:Eind,
+               na.action = na.exclude)
+  aov <- anova(fw_fit)
+  rownames(aov) <- c("Genotype","Environment","Adaptability","Residuals")
+  
+  # Save fitted values and residuals
+  fitted <- predict(fw_fit)
+  res <- data[, y] - fitted
+  
+  # This is to estimate the parameters
+  fw_fit2 <- lm(formula = data[, y] ~ -1 + data[, Geno] + data[, Geno]:Eind)
+  param[,1] <- fw_fit2$coef[1:nG]  
+  param[,2] <- fw_fit2$coef[(nG+1):(2*nG)]
+  
+  param[,3] <- tapply(res, data[, Geno], var, na.rm = TRUE)
+  
+  return(list(ANOVA = aov, param = param, fitted = fitted, res = res, Eindex = Eind, fits=summary(fw_fit)))
+}
+
+
+
+```
+
+# Introduction
+
+The analysis of the CFT 2019/2020 data is a multistep process. First we do a spatial correction with the SPaTS package for each screenhouse, at each time point for the plant height data. 
+
+Then we use the Finlay Wilkinson model to calculate the environmental index (Eind) to correct fo differences between screenhouses. 
+
+Subsequently we compare two models to fit the growth curves, a logistic growth model and a Psplines model. With the preferred model fit the growth curve for each even within each construct, the parameters derived from the fitted function can then be correlated to the final harvest data. 
+```{r}
+ph=read.csv(here("data/plant_height.csv")) 
+```
+
+
+```{r data, echo=FALSE}
+ph$C=as.factor(ph$col_number)
+ph$R=as.factor(ph$newrow)
+ph$sh=as.factor(ph$env)  
+ph$event=as.factor(ph$event)
+ph$construct=as.factor(ph$construct)
+```
+
+
+```{r show data, results='markdown', echo=FALSE}
+print(head(ph[,c(8,2,5,18,19,16,14)]))
+```
+
+# Step 1. SpATS correction
+
+For the spatial correction we run a separate model for each screenhouse and each measurement. Therefore we need to adjust the data so that it is grouped by these two factors, then run the model. For the model we use row and column numbers, the names of the events and the construct each event belongs to. 
+
+```{r}
+# Group data by time and environment, attach the model, the residuals and predicted values.
+byts=ph %>% group_by(week, env) %>% nest() %>% 
+  mutate(
+    spats_model=map(data, spats_model),
+    predict=map(spats_model, function(spats_model) { 
+      predict(spats_model, which=c("geno"))}),
+    residuals=map(spats_model, residuals)
+  )
+```
+
+
+```{r spats,  warning=FALSE, message=FALSE, echo=FALSE, results='markdown', fig.cap="Figure 1. Spatial model for plant height in screenhouse 1 at 6 weeks after planting."}
+plot(spats_model(byts$data[[1]]), main='Plant height (cm)')
+```
+
+Now that we have all the spatial models, we create a new dataframe with the residuals and the predicted values attached inside the data, with these two we calculate the corrected values. 
+
+```{r, newbyts}
+newbyts=byts %>% mutate(
+    data=map(data,  ~mutate(.x,residuals=unlist(residuals))),
+    #remove clutter
+    predict=map(predict, function(predict){
+      dplyr::select(predict, geno, predicted.values, standard.errors)})
+    )
+#Join predict dataframe to data
+for(i in 1:39){
+  newbyts$data[[i]]=dplyr::left_join(newbyts$data[[i]], newbyts$predict[[i]], by='geno')
+}                         
+# Add column for corrected values to data
+newbyts %<>%
+  mutate(
+    data=map(data, ~mutate(.x,cor=residuals+predicted.values))
+  )
+
+```
+
+```{r, results='markdown', echo=FALSE, fig.cap="Figure 2. Spatial model for plant height in screenhouse 1 at 6 weeks after planting, after spatial correction."}
+check=newbyts$data[[1]]
+plot(SpATS(response="cor", 
+        spatial = ~SpATS::PSANOVA(col_number, newrow, nseg=c(5,5)),
+        genotype = "geno", 
+        genotype.as.random = TRUE,
+        random=~R+C, 
+        data=check, control=list(monitor=0),
+        geno.decomp = "construct"), main='Corrected plant height (cm)')
+```
+We see now that there is only a spatial trend of -0.04-0.06 left, as opposed to to original -5-10 in Figure 1. 
+
+# Step 2. GxE Finlay Wilkinson model
+The next is to see whether there are large differences between the screenhouses. We use the new, corrected values to fit a spatial model for each timepoint, with the screenhouses together, thus tripling the number of rows. 
+
+```{r group by week}
+# Group dataset by week, attach newly fitted spatial model
+newbyt=dplyr::select(newbyts, env,week,data) %>%
+  unnest(data) %>% group_by(week) %>% nest() %>%
+  mutate(
+    spats_model=map(data,spats_model2)
+  )
+
+```
+
+```{r plot 3sh, results='markdown', echo=FALSE, fig.cap="Figure 3. Spatial model for all three screenhouses at 6 weeks after planting, after spatial correction."}
+with(newbyt, plot(spats_model[[1]], main='Corrected plant height (cm)'))
+```
+This is just to show how large the effect of each screenhouse is on the plant height, already in an early stage of the experiment. Since the screenhouses are better treated as three individual experiments, rather than a continuous gradient, we use a Finlay Wilkinson model to calculate the environmental index and fit a GxE model. 
+
+To classify the differences between screenhouses, we add a column classifying the screenhouse. Screenhouse 1 is used for the second year in a row and is therefore classed as depleted, screenhouse 2 and 3 are classed as normal. 
+```{r FW dataset}
+fwdat= newbyt %>% mutate(
+    #remove superabundant wt replicates
+    data=map(data, function(data){ data[data$block_number<5,]}),
+    #add screenhouse classification
+    data=map(data,  ~mutate(.x,ec=ifelse(sh=='sh1',"dep", "norm"))) )%>%
+  dplyr::select(-spats_model) %>% unnest(data) %>%
+  group_by(week, geno, env,ec) %>%
+  #get standard error and mean values per event per screenhouse per week
+  summarise( construct=unique(construct), event=unique(event), 
+             se=std.error(cor, na.rm=T),height=mean(cor, na.rm=T)) %>% 
+  group_by(week) %>% nest() %<>% mutate(
+  #fit Finlay Wilkinson model
+  fwfit=map(data, function(data){
+    fw(data=data.frame(data), y='height', Env='env', Geno='geno')}),
+  summary=map(fwfit, function(fwfit){fwfit$fits}),
+  adj.r2=as.double(map(summary, function(summary){summary$adj.r.squared})),
+  #extract fitted values
+  fitted=map(fwfit, fitted),
+  data=map(data,  ~mutate(.x,fitted=unlist(fitted))),
+  E.max=as.double(map(fwfit, function(fwfit){max(fwfit$Eindex)})),
+  E.min=as.double(map(fwfit, function(fwfit){min(fwfit$Eindex)}))
+  )
+
+```
+
+```{r fwdat, results='markdown', echo=FALSE}
+print(data.frame(fwdat[,c('week', 'adj.r2')]))
+```
+We see that the GxE model fits improve after week 9. Early on there is still some random variation, whereas later on >70% of the data is explained by the event and the environment.  
+
+# Step 3. Time series model selection by construct
+With the fitted values and the environmental index of the GxE model we calculate corrected genotypic values before fitting a growth model to the time series data. Then we compare the results of a logistc model and a p-spline model fitted to all events of each construct. Subsequently we fit our preferred model to each event individually. 
+
+```{r psplines by construct}
+# reformat the dataset for time series
+fittime= fwdat %>% dplyr::select(week,data, E.max, E.min) %>%  unnest(data) %>% group_by(week, geno) %>% 
+  summarise(construct=unique(construct), event=unique(event), fit.min=min(fitted), fit.max=max(fitted), E.min=min(E.min), E.max=max(E.max), a=(fit.max-fit.min)/(E.max-E.min)) %>% mutate(
+    height=fit.max-a*E.max
+  )
+
+#fit time, by construct
+ft.byc =fittime%>% group_by(construct) %>% nest() %<>%
+  mutate(
+    #Psplines model
+    obj=map(data, function(data){
+      PsplinesREML(x=data$week,y=data$height, xmin=6, xmax=28)}),
+    predw=map2(obj,data, function(obj,data){predict(obj, data$week)}),
+    data=map(data, ~mutate(.x, predw=unlist(predw))),
+    #Logistic model
+    obj.nls=map(data, function(data){
+         nls(height ~ SSlogis(week, phi1, phi2,phi3), data=data)}),
+    cf = map(obj.nls, coef),
+    alpha = as.double(map(cf, function(cf){as.numeric(cf[1])})),
+    beta = as.double(map(cf, function(cf){as.numeric(1/cf[3])})),
+    gamma = as.double(map(cf, function(cf){as.numeric(cf[2])})),
+    theta = pmap(list(alpha, beta,gamma), c),
+    predLw=map2(theta,data, function(theta,data){logistic(data$week,theta)}),
+    data=map(data, ~mutate(.x, predLw=unlist(predLw)))
+  )
+
+predat.cw= ft.byc %>% dplyr::select(construct, data) %>% unnest(data)
+
+#Extract Psplines model adjusted R2
+r2=with(predat.cw, summary(lm(height~predw)))$adj.r.squared
+
+#Extract logistic model adjusted R2
+r2L=with(predat.cw, summary(lm(height~predLw)))$adj.r.squared
+```
+
+```{r result 2 models, results='markdown', echo=FALSE, fig.cap='Figure 4. Psplines and logistic model fit for each construct.'}
+timepoints=seq(6,28, 0.01)
+ft.byc %<>% mutate(
+  pred=map(obj, function(obj){predict(obj, timepoints)}),
+  growthrate=map(obj, function(obj){predict(obj, timepoints, deriv=T)}),
+  asymptote=as.double(map(pred, max)),
+  max_rate=as.double(map(growthrate, max)),
+  wm_ndx=as.double(map(growthrate, which.max)),
+  infl_point=as.double(map(wm_ndx, function(wm_ndx){timepoints[wm_ndx]})),
+  predL=map(theta, function(theta){logistic(timepoints,theta)}),
+  predat=map2(pred, predL, function(pred, predL){
+    data.frame(pred=pred, predL=predL, timepoints)}),
+)
+predat.c= dplyr::select(ft.byc, construct, predat) %>% unnest(predat)
+wt=data.frame(wtx=unlist(fittime[fittime$construct=='wt','week']),
+wty=unlist(fittime[fittime$construct=='wt','height']))
+
+ann_text <- data.frame(week = c(22,22,22),height = c(200,150,100),
+                       construct = c(7,7,7))
+ann_line=data.frame(leg=rep(c(1,2,3), each=2),week=rep(c(15,17),3), height=rep(c(200,150,100), each=2 ),  col=rep(c('black', 'red', 'blue'), each=2))
+mains=c('Construct 3', 'Construct 4', 'Construct 7')
+names(mains)=c(3,4,7)
+
+fittime[fittime$construct!='wt',] %>%
+  ggplot(aes(week, height )) +
+  labs(x="Week", y="Plant height (cm)")+
+    geom_point(alpha = 1 / 3) + 
+    facet_wrap(~construct, labeller=labeller(construct=mains))+
+  geom_line(data = predat.c[predat.c$construct!='wt',],
+          mapping=aes(x=timepoints, y=pred, group=construct, colour='Pspline'))+
+  geom_line(data = predat.c[predat.c$construct!='wt',],
+          mapping=aes(x=timepoints, y=predL, group=construct, colour='Logistic'))+
+  geom_line(data=wt,
+           mapping=aes(x=wtx, y=wty, colour='WT mean'))+
+  scale_color_manual(
+    name='Model',
+    values = c(
+    'Pspline' = 'blue',
+    'Logistic' = 'red',
+    'WT mean'='black'))
+
+```
+
+```{r compare predictions, echo=FALSE,results='markdown', fig.cap='Figure 5. Comparison of the correlation between the two model fits and the observed data.'}
+fitdf=data.frame(Model=c('Psplines', 'Logistic'),
+                 Adj.R2=c(r2, r2L))
+par(mfrow=c(1,2))
+with(predat.cw, plot(predw~height, xlab='Observed plant height (cm)', ylab='Psplines model prediction for plant height (cm)' ))
+with(predat.cw, plot(predLw~height, xlab='Observed plant height (cm)', ylab='Logistic model prediction for plant height (cm)' ))
+print(fitdf)
+```
+
+We obseverve an underestimation of the plant height prediction by the logistic model when the plants are approximately 300cm tall, at 15 weeks after planting. Also the correlation fit shows a slightly lower fit for the logistic model output than for the Psplines model output. Therefore we decide to continue fitting the Psplines model to the time series data of each event within the clones. 
+
+The Psplines model produces three model parameters, the asymptote for maximum height, the maximum growth rate and the inflection point which is the time point during the experiment at which maximum growth occured. These three parameters can then be treated as traits together with final harvest traits. 
+
+# Step 4. Time series per event
+
+We recalculate the Psplines model per event, the single observation input per timepoint removes the wobble that is observed in figure 4. 
+
+```{r psplines by event, echo=FALSE}
+ft.bye =fittime%>% group_by(event, construct,geno) %>% nest()  
+
+ft.bye %<>% mutate(
+    obj=map(data, function(data){ PsplinesREML(x=data$week,y=data$height, xmin=6, xmax=28)}),
+    pred=map(obj, function(obj){data.frame(height=predict(obj, timepoints), week=timepoints)}),
+    predw=map2(obj,data, function(obj,data){predict(obj, data$week)}),
+    data=map(data, ~mutate(.x, predw=unlist(predw))),
+    growthrate=map(obj, function(obj){predict(obj, timepoints, deriv=T)}),
+    asymptote=as.double(map(pred, max)),
+    max_rate=as.double(map(growthrate, max)),
+    wm_ndx=as.double(map(growthrate, which.max)),
+    infl_point=as.double(map(wm_ndx, function(wm_ndx){timepoints[wm_ndx]})),
+    obj.nls=map(data, function(data){
+         nls(height ~ SSlogis(week, phi1, phi2,phi3), data=data) }),
+    cf = map(obj.nls, coef),
+    alpha = as.double(map(cf, function(cf){as.numeric(cf[1])})),
+    beta = as.double(map(cf, function(cf){as.numeric(1/cf[3])})),
+    gamma = as.double(map(cf, function(cf){as.numeric(cf[2])})),
+    theta = pmap(list(alpha, beta,gamma), c),
+    predL=map(theta, function(theta){logistic(timepoints,theta)}),
+    predLw=map2(theta,data, function(theta,data){logistic(data$week,theta)}),
+    predat=map2(pred, predL, function(pred, predL){data.frame(pred=pred, predL=predL, timepoints)}),
+    data=map(data, ~mutate(.x, predLw=unlist(predLw))),
+    logistic_max_rate = map2(alpha, beta,function(alpha, beta){0.25*alpha*beta}),
+    resultsDf=pmap(list(pred, growthrate, wm_ndx, alpha,logistic_max_rate, gamma), function(pred, growthrate, wm_ndx, alpha,logistic_max_rate, gamma){data.frame(parameter = c('asymptote',
+                                     'maximum growth rate','inflection point'),
+                       Psplines = c(round(max(pred),2), round(growthrate[wm_ndx],2),
+                                         round(timepoints[wm_ndx],2)),
+                       Logistic = c(round(alpha), round(logistic_max_rate), 
+                                    round(gamma)),
+                       units = c('cm','cm/week', 'weeks'))})
+)
+
+toplot=ft.bye %>% dplyr::select(geno,construct, event,pred) %>% unnest(pred)
+
+results=dplyr::select(ft.bye, geno,construct, event, resultsDf) %>% unnest(resultsDf) %>% dplyr::select(-Logistic) %>% pivot_wider(id_cols=c(construct,event, geno), names_from=parameter, values_from=Psplines)
+```
+
+```{r result psplines events, results='markdown', echo=FALSE, fig.cap='Figure 6. Psplines model output per event. Asymptote, maximum growth rate and inflection point are given for the highest performing event within each construct.'}
+print(head(data.frame(results)))
+
+wt=data.frame(toplot[toplot$construct=='wt',])
+wt=data.frame(dplyr::select(wt, -construct), construct=rep(c(3,4,7), each=2201))
+
+dat_text1 <- data.frame(
+  label = c(paste('Asymptote',round(results$asymptote[1],2),'cm'), paste('Asymptote',round(results$asymptote[2],2),'cm'), paste('Asymptote',round(results$asymptote[3],2),'cm')),
+  construct   = c(3, 4, 7)
+)
+
+dat_text2 <- data.frame(
+  label = c(paste('Maximum growth rate',round(results$`maximum growth rate`[1],2), 'cm/week'), paste('Maximum growth rate',round(results$`maximum growth rate`[2],2),'cm/week'), paste('Maximum growth rate',round(results$`maximum growth rate`[3],2),'cm/week')),
+  construct   = c(3, 4, 7)
+)
+
+dat_text3 <- data.frame(
+  label = c(paste('Inflection point',round(results$`inflection point`[1],2), 'weeks'), paste('Inflection point',round(results$`inflection point`[2],2),'weeks'), paste('Inflection point',round(results$`inflection point` [3],2),'weeks')),
+  construct   = c(3, 4, 7)
+)
+
+toplot[toplot$construct!='wt',] %>%
+  ggplot(aes(week, height)) +
+    geom_line(aes(group=event, colour="Events" )) + 
+  labs(x='Week', y='Plant height (cm)' )+
+    facet_grid(.~construct, labeller=labeller(construct=mains))+
+  geom_line(data=wt,
+           mapping=aes(x=week, y=height, group=construct,colour='WT Pspline'))+
+  scale_color_manual(name='', values = c('WT Pspline' = 'red', 'Events'='black'))+
+geom_text(
+  data    = dat_text1,
+  mapping = aes(x = Inf, y = -Inf, label = label),
+  hjust   = 'inward',
+  vjust   = -5, size=2
+  )+
+    geom_text(
+  data    = dat_text2,
+  mapping = aes(x = Inf, y = -Inf, label = label),
+  hjust   ='inward',
+  vjust   = -3, size=2
+  )+
+     geom_text(
+  data    = dat_text3,
+  mapping = aes(x = Inf, y = -Inf, label = label),
+  hjust   = 'inward',
+  vjust   = -1, size=2
+  )+
+  geom_text(aes(x=Inf, y=-Inf, label='Max'), hjust='inward', vjust=-7, size=2)
+
+```
+# Step 5. Correlation of traits
+We import the final harvest data, and select the traits that we can correlate to the time series traits. These are root size, root number, shoot weight, root weight and dry matter content. We do a spatial correction for each trait before we do a correlation with the growth model traits. 
+```{r import harvest data}
+#import harvest data
+hv=read.csv(here('data/harvest_data.csv'))
+
+#traits to correlate
+ttc=hv %>% dplyr::select(env,construct, event, geno, env,plot_number, row_number,newrow, col_number, root_size, rtno, stwt,rtwt, dm)
+```
+
+```{r add row and column, echo=FALSE}
+ttc$R=as.factor(ttc$newrow)
+ttc$C=as.factor(ttc$col_number)
+```
+
+We create a tibble attaching the spatial model, extract the residuals and the predicted values, and subsequently calculate corrected values. With these, we fit the Finlay Wilkinson model again to calculate the trait value for each event for the environmental index of 0. 
+```{r}
+#spatial correction
+traits=c('root_size', 'rtno', 'stwt','rtwt', 'dm')
+
+ttc.long=ttc %<>% pivot_longer(cols=traits,
+                      names_to = "trait",
+                      values_to = "value")  %<>% 
+  group_by(env, trait) %>% nest() %>% 
+  mutate( 
+    spats_model=map(data, spats_model),
+    predict=map(spats_model, function(spats_model) {
+      predict(spats_model, which=c("geno"))}),
+    residuals=map(spats_model, residuals),
+    residuals=map(residuals, function(residuals){ifelse(is.na(residuals), 0, residuals)}),
+    data=map(data,  ~mutate(.x,residuals=unlist(residuals))),
+    #remove clutter
+    predict=map(predict, function(predict){
+      dplyr::select(predict, geno, predicted.values, standard.errors)})
+)
+
+#Join predict dataframe to data
+for(i in 1:15){
+  ttc.long$data[[i]]=dplyr::left_join(ttc.long$data[[i]], ttc.long$predict[[i]], by='geno')
+}                         
+# Add column for corrected values to data
+ttc.long %<>%
+  mutate(
+    data=map(data, ~mutate(.x,cor=residuals+predicted.values))) 
+
+# Finlay wilkinson correction
+check=ttc.long %>% dplyr::select(-spats_model, -predict, -residuals) %>% 
+  unnest(data) 
+fw.hv=ttc.long %>% dplyr::select(-spats_model, -predict, -residuals) %>% 
+  unnest(data) %<>% group_by(trait, env,  geno) %>% 
+  summarise(construct=unique(construct), event=unique(event),sd=std.error(cor, na.rm=T), mean=mean(cor, na.rm=T)) %>%
+  group_by(trait) %>% nest() %>% mutate(
+    fwfit=map(data, function(data){
+      fw(data=data.frame(data), y='mean', Env='env', Geno='geno')}),
+    summary=map(fwfit, function(fwfit){fwfit$fits}),
+    adj.r2=as.double(map(summary, function(summary){summary$adj.r.squared})),
+    #extract fitted values
+    fitted=map(fwfit, fitted),
+    data=map(data,  ~mutate(.x,fitted=unlist(fitted))),
+    E.max=as.double(map(fwfit, function(fwfit){max(fwfit$Eindex)})),
+    E.min=as.double(map(fwfit, function(fwfit){min(fwfit$Eindex)}))
+  ) %>% dplyr::select(-fitted)
+
+hv.dat=fw.hv %>% dplyr::select(trait, data, E.max, E.min) %>% unnest(data) %>% group_by(trait, geno) 
+  
+hv.short=hv.dat %>% 
+  summarise(construct=unique(construct), event=unique(event), fit.min=min(fitted),fit.max=max(fitted), 
+            E.min=min(E.min), E.max=max(E.max), a=(fit.max-fit.min)/(E.max-E.min)) %>% 
+  mutate(value=round(fit.max-a*E.max,3)) %>% 
+  pivot_wider(id_cols=c(construct, event, geno), names_from=trait, values_from=value)
+
+all.dat=results %>% dplyr::left_join(dplyr::select(hv.short, -construct, -event), by='geno')%>% data.frame()
+```
+We have now attached the final harvest values for each event to the growth rate traits, and we can do the correlation. 
+```{r show alldata, results='markdown', echo=FALSE}
+colnames(all.dat)[5:6]=c("max.gr.rate", "infl.point")
+print(data.frame(all.dat))
+```
+
+```{r correlation, echo=FALSE, results='markdown'}
+r <- cor(all.dat[,4:11])
+corrplot(r, method = "circle")
+print(r, digits = 2)
+```
+
